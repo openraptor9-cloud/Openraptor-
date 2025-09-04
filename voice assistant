@@ -1,0 +1,98 @@
+import speech_recognition as sr
+import pyttsx3
+import datetime
+import webbrowser
+import os
+import wikipedia
+
+engine = pyttsx3.init('espeak') 
+voices = engine.getProperty('voices')
+
+engine = pyttsx3.init('espeak')
+voices = engine.getProperty('voices')
+
+from gtts import gTTS
+import os
+
+def speak(audio):
+    """Funzione per far parlare l'assistente usando gTTS."""
+    tts = gTTS(text=audio, lang='it')
+    tts.save("audio.mp3")
+    os.system("mpg123 audio.mp3") 
+
+for i, voice in enumerate(voices):
+    print(f"Voce {i}: {voice.name}")
+engine.setProperty('voice', voices[51].id) 
+
+def speak(audio):
+    """Funzione per far parlare l'assistente."""
+    engine.say(audio)
+    engine.runAndWait()
+
+def wishMe():
+    """Saluta l'utente in base all'ora del giorno."""
+    hour = int(datetime.datetime.now().hour)
+    if 0 <= hour < 12:
+        speak("Buongiorno! ben svegliato!")
+    elif 12 <= hour < 18:
+        speak("Buon pomeriggio!")
+    else:
+        speak("Buonasera!' '")
+    speak("Sono il vostro assistente personale. Come posso aiutarti oggi?")
+
+def takeCommand():
+    """Acquisisce l'audio dal microfono e lo converte in testo."""
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("In ascolto...")
+        r.pause_threshold = 1 
+        audio = r.listen(source)
+
+    try:
+        print("Riconoscimento in corso...")
+        query = r.recognize_google(audio, language='it-IT') 
+        print(f"Hai detto: {query}\n")
+    except sr.UnknownValueError:
+        print("Non ho capito. Puoi ripetere, per favore?")
+        return "None"
+    except sr.RequestError:
+        print("Impossibile connettersi al servizio di riconoscimento vocale di Google.")
+        return "None"
+    except Exception as e:
+        print(f"Errore: {e}")
+        return "None"
+    return query
+
+if __name__ == "__main__":
+    wishMe()
+    while True:
+        query = takeCommand().lower() 
+
+        if 'wikipedia' in query:
+            speak('Ricerca su Wikipedia...')
+            query = query.replace("wikipedia", "")
+            try:
+                results = wikipedia.summary(query, sentences=2)
+                speak("Secondo Wikipedia...")
+                print(results)
+                speak(results)
+            except wikipedia.exceptions.PageError:
+                speak("Mi dispiace, non ho trovato nulla su Wikipedia per questo argomento.")
+            except wikipedia.exceptions.DisambiguationError as e:
+                speak(f"Ci sono più risultati per '{query}'. Potresti essere più specifico?")
+
+        elif 'apri youtube' in query:
+            speak("Apro YouTube.")
+            webbrowser.open("youtube.com")
+        
+        elif 'apri google' in query:
+            speak("Apro Google.")
+            webbrowser.open("google.com")
+        
+        elif 'che ora è' in query:
+            strTime = datetime.datetime.now().strftime("%H:%M:%S")
+            speak(f"l'ora attuale è {strTime}")
+
+        elif esci' in query or 'stop' in query or 'spegniti' in query:
+            speak("Arrivederci!")
+            break
